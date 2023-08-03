@@ -8,7 +8,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -41,7 +41,7 @@ public class User implements Serializable {
     @Column
     private String imageUrl;
     @Column(nullable = false, updatable = false)
-    private Date createdAt;
+    private Instant createdAt;
     @Column(nullable = false)
-    private Date updatedAt;
+    private Instant updatedAt;
 }
