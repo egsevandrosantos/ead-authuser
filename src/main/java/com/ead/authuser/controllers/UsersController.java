@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -44,7 +45,7 @@ public class UsersController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody @JsonView(UserDTO.Create.class) UserDTO userDTO, UriComponentsBuilder uriComponentsBuilder) {
+    public ResponseEntity<?> create(@RequestBody @Validated(UserDTO.Create.class) @JsonView(UserDTO.Create.class) UserDTO userDTO, UriComponentsBuilder uriComponentsBuilder) {
         if (service.valid(userDTO)) {
             UUID id = service.create(userDTO);
             UriComponents uriComponents = uriComponentsBuilder.path("/users/{id}").buildAndExpand(id);
@@ -59,7 +60,7 @@ public class UsersController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable(value = "id") UUID id, @RequestBody @JsonView(UserDTO.Update.class) UserDTO userDTO) {
+    public ResponseEntity<?> update(@PathVariable(value = "id") UUID id, @RequestBody @Validated(UserDTO.Update.class) @JsonView(UserDTO.Update.class) UserDTO userDTO) {
         Optional<UserDTO> updatedUserDTOOpt = service.findById(id);
         if (updatedUserDTOOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -80,7 +81,7 @@ public class UsersController {
     }
 
     @PutMapping("/{id}/password")
-    public ResponseEntity<?> updatePassword(@PathVariable(value = "id") UUID id, @RequestBody @JsonView(UserDTO.UpdatePassword.class) UserDTO userDTO) {
+    public ResponseEntity<?> updatePassword(@PathVariable(value = "id") UUID id, @RequestBody @Validated(UserDTO.UpdatePassword.class) @JsonView(UserDTO.UpdatePassword.class) UserDTO userDTO) {
         Optional<UserDTO> internalUserDTOOpt = service.findById(id);
         if (internalUserDTOOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -103,7 +104,7 @@ public class UsersController {
     }
 
     @PutMapping("/{id}/image")
-    public ResponseEntity<?> updateImage(@PathVariable(value = "id") UUID id, @RequestBody @JsonView(UserDTO.UpdateImage.class) UserDTO userDTO) {
+    public ResponseEntity<?> updateImage(@PathVariable(value = "id") UUID id, @RequestBody @Validated(UserDTO.UpdateImage.class) @JsonView(UserDTO.UpdateImage.class) UserDTO userDTO) {
         Optional<UserDTO> updatedUserDTOOpt = service.findById(id);
         if (updatedUserDTOOpt.isEmpty()) {
             return ResponseEntity.notFound().build();

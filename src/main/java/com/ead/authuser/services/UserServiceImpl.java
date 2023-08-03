@@ -99,10 +99,17 @@ public class UserServiceImpl implements UserService {
     }
 
     public boolean valid(UserDTO updatedUserDTO, UserDTO internalUserDTO) {
-        if (repository.existsByUsernameAndIdIsNot(updatedUserDTO.getUsername(), updatedUserDTO.getId())) {
+        boolean usernameExists = updatedUserDTO.getId() == null
+            ? repository.existsByUsername(updatedUserDTO.getUsername())
+            : repository.existsByUsernameAndIdIsNot(updatedUserDTO.getUsername(), updatedUserDTO.getId());
+        if (usernameExists) {
             updatedUserDTO.getErrors().put("username", List.of("Username is already taken."));
         }
-        if (repository.existsByEmailAndIdIsNot(updatedUserDTO.getEmail(), updatedUserDTO.getId())) {
+
+        boolean emailExists = updatedUserDTO.getId() == null
+            ? repository.existsByEmail(updatedUserDTO.getEmail())
+            : repository.existsByEmailAndIdIsNot(updatedUserDTO.getEmail(), updatedUserDTO.getId());
+        if (emailExists) {
             updatedUserDTO.getErrors().put("email", List.of("Email is already taken."));
         }
 
@@ -111,7 +118,7 @@ public class UserServiceImpl implements UserService {
                 && !updatedUserDTO.getOldPassword().isBlank()
                 && !updatedUserDTO.getOldPassword().equals(internalUserDTO.getPassword())
             ) {
-                updatedUserDTO.getErrors().put("oldPassword", List.of("Password is invalid."));
+                updatedUserDTO.getErrors().put("oldPassword", List.of("Wrong password."));
             }
         }
 
