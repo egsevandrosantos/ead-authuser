@@ -1,5 +1,6 @@
 package com.ead.authuser.dtos;
 
+import com.ead.authuser.dtos.validators.annotations.UsernameConstraint;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,6 +32,7 @@ public class UserDTO extends BaseDTO {
     @JsonView(Create.class)
     @NotBlank(groups = Create.class)
     @Size(min = 4, max = 50, groups = Create.class)
+    @UsernameConstraint(groups = Create.class)
     private String username;
 
     @JsonView(Create.class)
