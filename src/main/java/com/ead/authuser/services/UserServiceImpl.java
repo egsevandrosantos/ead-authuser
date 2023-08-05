@@ -9,6 +9,9 @@ import com.ead.authuser.services.interfaces.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
@@ -21,15 +24,18 @@ public class UserServiceImpl implements UserService {
     private UserRepository repository;
 
     @Override
-    public List<UserDTO> findAll() {
-        List<User> users = repository.findAll();
+    public Page<UserDTO> findAll(Pageable pageable) {
+        Page<User> usersPage = repository.findAll(pageable);
+
+        List<User> users = usersPage.getContent();
         List<UserDTO> usersDTO = new ArrayList<>();
         users.forEach(user -> {
             UserDTO userDTO = new UserDTO();
             BeanUtils.copyProperties(user, userDTO);
             usersDTO.add(userDTO);
         });
-        return usersDTO;
+
+        return new PageImpl<>(usersDTO, usersPage.getPageable(), usersPage.getTotalElements());
     }
 
     @Override
