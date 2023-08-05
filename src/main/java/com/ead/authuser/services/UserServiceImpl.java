@@ -6,6 +6,7 @@ import com.ead.authuser.enums.UserType;
 import com.ead.authuser.models.User;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.services.interfaces.UserService;
+import com.ead.authuser.specifications.SpecificationTemplate;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,8 @@ public class UserServiceImpl implements UserService {
     private UserRepository repository;
 
     @Override
-    public Page<UserDTO> findAll(Pageable pageable) {
-        Page<User> usersPage = repository.findAll(pageable);
+    public Page<UserDTO> findAll(SpecificationTemplate.UserSpec filtersSpec, Pageable pageable) {
+        Page<User> usersPage = repository.findAll(filtersSpec, pageable);
 
         List<User> users = usersPage.getContent();
         List<UserDTO> usersDTO = new ArrayList<>();

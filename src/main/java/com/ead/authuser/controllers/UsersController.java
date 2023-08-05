@@ -2,6 +2,7 @@ package com.ead.authuser.controllers;
 
 import com.ead.authuser.dtos.UserDTO;
 import com.ead.authuser.services.interfaces.UserService;
+import com.ead.authuser.specifications.SpecificationTemplate;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -27,10 +28,13 @@ public class UsersController {
     private UserService service;
 
     @GetMapping
-    public ResponseEntity<Page<UserDTO>> findAll(@PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
+    public ResponseEntity<Page<UserDTO>> findAll(
+        SpecificationTemplate.UserSpec filtersSpec,
+        @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(service.findAll(pageable));
+            .body(service.findAll(filtersSpec, pageable));
     }
 
     @GetMapping("/{id}")
