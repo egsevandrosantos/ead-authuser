@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -32,9 +34,18 @@ public class UsersController {
         SpecificationTemplate.UserSpec filtersSpec,
         @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
     ) {
+        Page<UserDTO> usersDTOPage = service.findAll(filtersSpec, pageable);
+        if (usersDTOPage.hasContent()) {
+            usersDTOPage.getContent().forEach(userDTO -> {
+                Link selfLink = WebMvcLinkBuilder.linkTo(
+                    WebMvcLinkBuilder.methodOn(UsersController.class).findById(userDTO.getId())
+                ).withSelfRel();
+                userDTO.add(selfLink);
+            });
+        }
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(service.findAll(filtersSpec, pageable));
+            .body(usersDTOPage);
     }
 
     @GetMapping("/{id}")

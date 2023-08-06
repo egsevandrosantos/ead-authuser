@@ -3,6 +3,7 @@ package com.ead.authuser.dtos;
 import com.ead.authuser.dtos.validators.annotations.UsernameConstraint;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -79,8 +80,10 @@ public class UserDTO extends BaseDTO {
     private UserType type;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Instant createdAt;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Instant updatedAt;
 }
