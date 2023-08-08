@@ -144,7 +144,13 @@ public class UsersController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable(value = "id") UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
+        if (service.findById(id).isEmpty()) {
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .build();
+        }
+
         service.deleteById(id);
         return ResponseEntity
             .status(HttpStatus.NO_CONTENT)
