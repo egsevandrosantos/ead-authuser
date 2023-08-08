@@ -95,7 +95,7 @@ public class UsersController {
         } else {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(userDTO.getErrors());
+                .body(updatedUserDTO.getErrors());
         }
     }
 
@@ -118,7 +118,7 @@ public class UsersController {
         } else {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(userDTO.getErrors());
+                .body(updatedUserDTO.getErrors());
         }
     }
 
@@ -139,7 +139,7 @@ public class UsersController {
         } else {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(userDTO.getErrors());
+                .body(updatedUserDTO.getErrors());
         }
     }
 
