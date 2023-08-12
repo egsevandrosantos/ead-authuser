@@ -4,6 +4,8 @@ import com.ead.authuser.dtos.UserDTO;
 import com.ead.authuser.services.interfaces.UserService;
 import com.ead.authuser.specifications.SpecificationTemplate;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +28,20 @@ import java.util.UUID;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/users")
 public class UsersController {
+    Logger logger = LoggerFactory.getLogger(UsersController.class);
+
     @Autowired
     private UserService service;
+
+    @GetMapping("/logging")
+    public String logging() {
+        logger.trace("TRACE");
+        logger.debug("DEBUG");
+        logger.info("INFO");
+        logger.warn("WARN");
+        logger.error("ERROR");
+        return "Logging in Spring Boot...";
+    }
 
     @GetMapping
     public ResponseEntity<Page<UserDTO>> findAll(
