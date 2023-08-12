@@ -67,8 +67,9 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(userDTO, user);
         user.setStatus(UserStatus.ACTIVE);
         user.setType(UserType.STUDENT);
-        user.setCreatedAt(Instant.now());
-        user.setUpdatedAt(Instant.now());
+        Instant createdAt = Instant.now();
+        user.setCreatedAt(createdAt);
+        user.setUpdatedAt(createdAt);
         user = repository.save(user);
         return user.getId();
     }
