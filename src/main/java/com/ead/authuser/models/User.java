@@ -5,10 +5,13 @@ import com.ead.authuser.enums.UserType;
 import com.ead.authuser.enums.converters.UserStatusConverter;
 import com.ead.authuser.enums.converters.UserTypeConverter;
 import lombok.Data;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -44,4 +47,7 @@ public class User implements Serializable {
     private Instant createdAt;
     @Column(nullable = false)
     private Instant updatedAt;
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
+    private List<UserCourse> usersCourses;
 }
