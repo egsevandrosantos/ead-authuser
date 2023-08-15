@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
@@ -25,7 +26,12 @@ public class UserServiceImpl implements UserService {
     private UserRepository repository;
 
     @Override
-    public Page<UserDTO> findAll(SpecificationTemplate.UserSpec filtersSpec, Pageable pageable) {
+    public Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable, UUID courseId) {
+        if (courseId != null) {
+            filtersSpec = ((Specification<User>) (root, query, criteriaBuilder) ->
+                criteriaBuilder.and(criteriaBuilder.equal(root.join("usersCourses").get("courseId"), courseId))
+            ).and(filtersSpec);
+        }
         Page<User> usersPage = repository.findAll(filtersSpec, pageable);
 
         List<User> users = usersPage.getContent();

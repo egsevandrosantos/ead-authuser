@@ -47,9 +47,10 @@ public class UsersController {
     @GetMapping
     public ResponseEntity<Page<UserDTO>> findAll(
         SpecificationTemplate.UserSpec filtersSpec,
-        @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
+        @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable,
+        @RequestParam(required = false) UUID courseId
     ) {
-        Page<UserDTO> usersDTOPage = service.findAll(filtersSpec, pageable);
+        Page<UserDTO> usersDTOPage = service.findAll(filtersSpec, pageable, courseId);
         if (usersDTOPage.hasContent()) {
             usersDTOPage.getContent().forEach(userDTO -> {
                 Link selfLink = WebMvcLinkBuilder.linkTo(
