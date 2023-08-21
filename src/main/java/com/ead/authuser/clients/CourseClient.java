@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -17,19 +17,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 @Log4j2
-public class UserCourseClient {
+public class CourseClient {
     @Autowired
     private RestTemplate restTemplate;
     @Autowired
     private ObjectMapper objectMapper;
+    @Value("${ead.api.url.course}")
+    private String coursesURI;
 
-    private static final String COURSES_URI = "http://localhost:8082/";
-
-    public Page<CourseDTO> findAll(Pageable pageable, UUID userId) {
+    public Page<CourseDTO> findAllCourses(Pageable pageable, UUID userId) {
         List<String> queryParams = new ArrayList<>();
         if (userId != null) {
             queryParams.add("userId=" + userId);
@@ -37,7 +36,7 @@ public class UserCourseClient {
         queryParams.add("page=" + pageable.getPageNumber());
         queryParams.add("size=" + pageable.getPageSize());
         queryParams.add("sort=" + pageable.getSort().toString().replaceAll(": ", ","));
-        String requestUrl = COURSES_URI + "/courses?" + String.join("&", queryParams);
+        String requestUrl = coursesURI + "/courses?" + String.join("&", queryParams);
 
         log.info("Request URL: {}", requestUrl);
         try {
