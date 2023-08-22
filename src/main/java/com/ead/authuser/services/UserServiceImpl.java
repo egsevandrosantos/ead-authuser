@@ -8,6 +8,8 @@ import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.services.interfaces.UserService;
 import com.ead.authuser.specifications.SpecificationTemplate;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -72,7 +74,6 @@ public class UserServiceImpl implements UserService {
         User user = new User();
         BeanUtils.copyProperties(userDTO, user);
         user.setStatus(UserStatus.ACTIVE);
-        user.setType(UserType.STUDENT);
         Instant createdAt = Instant.now();
         user.setCreatedAt(createdAt);
         user.setUpdatedAt(createdAt);
@@ -127,7 +128,11 @@ public class UserServiceImpl implements UserService {
             updatedUserDTO.getErrors().put("email", List.of("Email is already taken."));
         }
 
+        List<UserType> userTypes = new ArrayList<>();
+        userTypes.add(updatedUserDTO.getType());
         if (internalUserDTO != null) {
+            userTypes.add(internalUserDTO.getType());
+
             if (updatedUserDTO.getOldPassword() != null
                 && !updatedUserDTO.getOldPassword().isBlank()
                 && !updatedUserDTO.getOldPassword().equals(internalUserDTO.getPassword())
@@ -135,6 +140,9 @@ public class UserServiceImpl implements UserService {
                 updatedUserDTO.getErrors().put("oldPassword", List.of("Wrong password."));
             }
         }
+
+        userTypes.add(UserType.STUDENT); // Default
+        updatedUserDTO.setType(ObjectUtils.firstNonNull(userTypes.toArray(new UserType[0])));
 
         return updatedUserDTO.getErrors().isEmpty();
     }

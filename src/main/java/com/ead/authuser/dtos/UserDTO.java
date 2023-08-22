@@ -73,11 +73,11 @@ public class UserDTO extends BaseDTO {
     @NotBlank(groups = UpdateImage.class)
     private String imageUrl;
 
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private UserStatus status;
+    @JsonView({Create.class, Update.class})
+    private UserType type;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private UserType type;
+    private UserStatus status;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", timezone = "UTC")
