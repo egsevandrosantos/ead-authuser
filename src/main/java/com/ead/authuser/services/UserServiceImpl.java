@@ -4,6 +4,8 @@ import com.ead.authuser.dtos.UserDTO;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
 import com.ead.authuser.models.User;
+import com.ead.authuser.models.UserCourse;
+import com.ead.authuser.repositories.UserCourseRepository;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.services.interfaces.UserService;
 import com.ead.authuser.specifications.SpecificationTemplate;
@@ -22,10 +24,14 @@ import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.*;
 
+import javax.transaction.Transactional;
+
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository repository;
+    @Autowired
+    private UserCourseRepository userCourseRepository;
 
     @Override
     public Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable, UUID courseId) {
@@ -62,11 +68,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteById(UUID id) {
-        if (id == null) {
-            return;
+    @Transactional
+    public void deleteById(UUID id) throws IllegalArgumentException {
+        Optional<User> userOptional = null;
+        if (id == null || (userOptional = repository.findById(id)).isEmpty()) {
+            throw new IllegalArgumentException();
         }
-        repository.deleteById(id);
+        User user = userOptional.get();
+        List<UserCourse> userCourses = userCourseRepository.findByUser(user);
+        userCourseRepository.deleteAll(userCourses);
+        repository.delete(user);
     }
 
     @Override

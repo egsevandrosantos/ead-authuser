@@ -173,18 +173,18 @@ public class UsersController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
-        log.debug("DELETE UsersController#delete received id: {}", id);
-        if (service.findById(id).isEmpty()) {
+        try {
+            log.debug("DELETE UsersController#delete received id: {}", id);
+            service.deleteById(id);
+            log.info("DELETE UsersController#delete deleted user id: {}", id);
+            return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+        } catch (IllegalArgumentException ex) {
             log.warn("DELETE UsersController#delete not found");
             return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .build();
         }
-
-        service.deleteById(id);
-        log.info("DELETE UsersController#delete deleted user id: {}", id);
-        return ResponseEntity
-            .status(HttpStatus.NO_CONTENT)
-            .build();
     }
 }

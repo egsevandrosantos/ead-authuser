@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface UserService {
     Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable, UUID courseId);
     Optional<UserDTO> findById(UUID id);
-    void deleteById(UUID id);
+    void deleteById(UUID id) throws IllegalArgumentException;
     UUID create(UserDTO userDTO);
     void update(UserDTO userDTO);
     void merge(UserDTO source, UserDTO dest);

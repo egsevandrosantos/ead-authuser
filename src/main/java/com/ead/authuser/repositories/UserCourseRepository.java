@@ -5,7 +5,10 @@ import com.ead.authuser.models.UserCourse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
+import java.util.List;
+
 
 public interface UserCourseRepository extends JpaRepository<UserCourse, UUID> {
     boolean existsByUserAndCourseId(User user, UUID courseId);
+    List<UserCourse> findByUser(User user);
 }
