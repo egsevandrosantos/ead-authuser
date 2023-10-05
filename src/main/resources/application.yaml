@@ -33,8 +33,8 @@ logging:
 ead:
   api:
     url:
-      course: "http://ead-course-service/"
-      authuser: "http://ead-authuser-service/"
+      course: "http://ead-course-service/ead-course/"
+      authuser: "http://ead-authuser-service/ead-authuser/"
 
 eureka:
   client:
