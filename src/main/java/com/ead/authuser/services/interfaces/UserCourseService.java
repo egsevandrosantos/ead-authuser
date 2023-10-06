@@ -10,6 +10,7 @@ import java.util.UUID;
 public interface UserCourseService {
     Page<CourseDTO> findAll(Pageable pageable, UUID userId);
     UUID create(UserCourseDTO userCourseDTO);
+    void deleteByCourseId(UUID courseId);
     boolean valid(UserCourseDTO userCourseDTO);
     void merge(UserCourseDTO source, UserCourseDTO dest);
     void merge(UserCourseDTO source, UserCourseDTO dest, Class<? extends UserCourseDTO.UserCourseView> view);

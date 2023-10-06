@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import javax.transaction.Transactional;
+
 @Service
 public class UserCourseServiceImpl implements UserCourseService {
     @Autowired
@@ -43,6 +45,18 @@ public class UserCourseServiceImpl implements UserCourseService {
         userCourse.setUpdatedAt(createdAt);
         userCourse = repository.save(userCourse);
         return userCourse.getId();
+    }
+
+    @Override
+    @Transactional
+    public void deleteByCourseId(UUID courseId) {
+        if (courseId == null) {
+            throw new IllegalArgumentException("Course id not specified");
+        }
+        List<UserCourse> usersCourses = null;
+        if (!(usersCourses = repository.findAllByCourseId(courseId)).isEmpty()) {
+            repository.deleteAll(usersCourses);
+        }
     }
 
     @Override
