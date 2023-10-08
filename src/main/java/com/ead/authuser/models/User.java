@@ -7,6 +7,9 @@ import com.ead.authuser.enums.converters.UserTypeConverter;
 import lombok.Data;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -17,6 +20,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "users")
 @Data
+@EntityListeners(AuditingEntityListener.class)
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -44,8 +48,10 @@ public class User implements Serializable {
     @Column
     private String imageUrl;
     @Column(nullable = false, updatable = false)
+    @CreatedDate
     private Instant createdAt;
     @Column(nullable = false)
+    @LastModifiedDate
     private Instant updatedAt;
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @Fetch(FetchMode.SUBSELECT)
