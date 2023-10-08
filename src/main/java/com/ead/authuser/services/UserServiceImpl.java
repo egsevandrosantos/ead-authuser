@@ -4,11 +4,9 @@ import com.ead.authuser.dtos.UserDTO;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
 import com.ead.authuser.models.User;
-import com.ead.authuser.models.UserCourse;
 import com.ead.authuser.repositories.UserCourseRepository;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.services.interfaces.UserService;
-import com.ead.authuser.specifications.SpecificationTemplate;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import org.apache.commons.lang3.ObjectUtils;
@@ -21,8 +19,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
-import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -43,70 +41,93 @@ public class UserServiceImpl implements UserService {
         Page<User> usersPage = repository.findAll(filtersSpec, pageable);
 
         List<User> users = usersPage.getContent();
-        List<UserDTO> usersDTO = new ArrayList<>();
-        users.forEach(user -> {
-            UserDTO userDTO = new UserDTO();
-            BeanUtils.copyProperties(user, userDTO);
-            usersDTO.add(userDTO);
-        });
-
+        List<UserDTO> usersDTO = users.stream().map(user -> merge(user, new UserDTO())).collect(Collectors.toList());
         return new PageImpl<>(usersDTO, usersPage.getPageable(), usersPage.getTotalElements());
     }
 
     @Override
     public Optional<UserDTO> findById(UUID id) {
-        if (id == null) {
+        Optional<User> userOpt;
+        if (id == null || (userOpt = repository.findById(id)).isEmpty()) {
             return Optional.empty();
         }
-        Optional<User> user = repository.findById(id);
-        if (user.isEmpty()) {
-            return Optional.empty();
-        }
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(user.get(), userDTO);
-        return Optional.of(userDTO);
+
+        User user = userOpt.get();
+        return Optional.of(merge(user, new UserDTO()));
     }
 
     @Override
     @Transactional
-    public void deleteById(UUID id) throws IllegalArgumentException {
-        Optional<User> userOptional = null;
-        if (id == null || (userOptional = repository.findById(id)).isEmpty()) {
-            throw new IllegalArgumentException();
+    public ServiceResponse deleteById(UUID id) throws IllegalArgumentException {
+        if (id == null) {
+            return ServiceResponse.builder()
+                .ok(false)
+                .build();
         }
-        User user = userOptional.get();
-        List<UserCourse> userCourses = userCourseRepository.findByUser(user);
-        userCourseRepository.deleteAll(userCourses);
-        repository.delete(user);
+        if (repository.existsById(id)) {
+            userCourseRepository.deleteAllByUser(id);
+            repository.deleteById(id);
+        }
+        return ServiceResponse.builder().build();
     }
 
     @Override
-    public UUID create(UserDTO userDTO) {
+    public ServiceResponse create(UserDTO userDTO) {
         User user = new User();
         BeanUtils.copyProperties(userDTO, user);
+        Map<String, List<String>> errors = valid(user);
+        if (!errors.isEmpty()) {
+            return ServiceResponse.builder()
+                .ok(false)
+                .errors(errors)
+                .build();
+        }
+
         user.setStatus(UserStatus.ACTIVE);
-        Instant createdAt = Instant.now();
-        user.setCreatedAt(createdAt);
-        user.setUpdatedAt(createdAt);
         user = repository.save(user);
-        return user.getId();
+        return ServiceResponse.builder().id(user.getId()).build();
     }
 
     @Override
-    public void update(UserDTO userDTO) {
-        User user = new User();
-        BeanUtils.copyProperties(userDTO, user);
-        user.setUpdatedAt(Instant.now());
+    @Transactional // Evitar a consulta SELECT antes do UPDATE
+    public ServiceResponse update(UUID id, UserDTO userDTO, Class<? extends UserDTO.UserView> view) {
+        Optional<User> userOpt = repository.findById(id);
+        if (userOpt.isEmpty()) {
+            return ServiceResponse.builder()
+                .ok(false)
+                .found(false)
+                .build();
+        }
+
+        User user = userOpt.get();
+        User internalUser = merge(user, new User());
+        User updatedUser = merge(user, new User());
+        merge(userDTO, updatedUser, view);
+        Map<String, List<String>> errors = valid(updatedUser, userDTO, internalUser);
+        if (!errors.isEmpty()) {
+            return ServiceResponse.builder()
+                .ok(false)
+                .found(true)
+                .errors(errors)
+                .build();
+        }
+
+        merge(userDTO, user, view);
         repository.save(user);
+        return ServiceResponse.builder().build();
     }
 
-    @Override
-    public void merge(UserDTO source, UserDTO dest) {
+    public UserDTO merge(User source, UserDTO dest) {
         BeanUtils.copyProperties(source, dest);
+        return dest;
     }
 
-    @Override
-    public void merge(UserDTO source, UserDTO dest, Class<? extends UserDTO.UserView> view) {
+    private User merge(User source, User dest) {
+        BeanUtils.copyProperties(source, dest);
+        return dest;
+    }
+
+    private void merge(UserDTO source, User dest, Class<? extends UserDTO.UserView> view) {
         String[] fieldsNotInViewToIgnore = Arrays.stream(UserDTO.class.getDeclaredFields())
             .filter(field -> {
                 JsonView jsonView = field.getAnnotation(JsonView.class);
@@ -120,41 +141,44 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(source, dest, fieldsNotInViewToIgnore);
     }
 
-    public boolean valid(UserDTO updatedUserDTO) {
-        return valid(updatedUserDTO, null);
+    private Map<String, List<String>> valid(User updatedUser) {
+        return valid(updatedUser, null, null);
     }
 
-    public boolean valid(UserDTO updatedUserDTO, UserDTO internalUserDTO) {
-        boolean usernameExists = updatedUserDTO.getId() == null
-            ? repository.existsByUsername(updatedUserDTO.getUsername())
-            : repository.existsByUsernameAndIdIsNot(updatedUserDTO.getUsername(), updatedUserDTO.getId());
+    private Map<String, List<String>> valid(User updatedUser, UserDTO userDTO, User internalUser) {
+        Map<String, List<String>> errors = new HashMap<>();
+
+        boolean usernameExists = updatedUser.getId() == null
+            ? repository.existsByUsername(updatedUser.getUsername())
+            : repository.existsByUsernameAndIdIsNot(updatedUser.getUsername(), updatedUser.getId());
         if (usernameExists) {
-            updatedUserDTO.getErrors().put("username", List.of("Username is already taken."));
+            errors.put("username", List.of("Username is already taken."));
         }
 
-        boolean emailExists = updatedUserDTO.getId() == null
-            ? repository.existsByEmail(updatedUserDTO.getEmail())
-            : repository.existsByEmailAndIdIsNot(updatedUserDTO.getEmail(), updatedUserDTO.getId());
+        boolean emailExists = updatedUser.getId() == null
+            ? repository.existsByEmail(updatedUser.getEmail())
+            : repository.existsByEmailAndIdIsNot(updatedUser.getEmail(), updatedUser.getId());
         if (emailExists) {
-            updatedUserDTO.getErrors().put("email", List.of("Email is already taken."));
+            errors.put("email", List.of("Email is already taken."));
         }
 
         List<UserType> userTypes = new ArrayList<>();
-        userTypes.add(updatedUserDTO.getType());
-        if (internalUserDTO != null) {
-            userTypes.add(internalUserDTO.getType());
+        userTypes.add(updatedUser.getType());
+        if (internalUser != null) {
+            userTypes.add(internalUser.getType());
 
-            if (updatedUserDTO.getOldPassword() != null
-                && !updatedUserDTO.getOldPassword().isBlank()
-                && !updatedUserDTO.getOldPassword().equals(internalUserDTO.getPassword())
+            if (userDTO != null
+                && userDTO.getOldPassword() != null
+                && !userDTO.getOldPassword().isBlank()
+                && !userDTO.getOldPassword().equals(internalUser.getPassword())
             ) {
-                updatedUserDTO.getErrors().put("oldPassword", List.of("Wrong password."));
+                errors.put("oldPassword", List.of("Wrong password."));
             }
         }
 
         userTypes.add(UserType.STUDENT); // Default
-        updatedUserDTO.setType(ObjectUtils.firstNonNull(userTypes.toArray(new UserType[0])));
+        updatedUser.setType(ObjectUtils.firstNonNull(userTypes.toArray(new UserType[0])));
 
-        return updatedUserDTO.getErrors().isEmpty();
+        return errors;
     }
 }

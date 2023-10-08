@@ -1,12 +1,11 @@
 package com.ead.authuser.controllers;
 
 import com.ead.authuser.dtos.UserDTO;
+import com.ead.authuser.services.ServiceResponse;
 import com.ead.authuser.services.interfaces.UserService;
 import com.ead.authuser.specifications.SpecificationTemplate;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,13 +64,13 @@ public class UsersController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable(value = "id") UUID id) {
-        Optional<UserDTO> user = service.findById(id);
-        return user
-            .map(value ->
+    public ResponseEntity<UserDTO> findById(@PathVariable(value = "id") UUID id) {
+        Optional<UserDTO> userDTOOpt = service.findById(id);
+        return userDTOOpt
+            .map(userDTO ->
                 ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(value)
+                    .body(userDTO)
             ).orElseGet(() ->
                 ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -82,108 +81,102 @@ public class UsersController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody @Validated(UserDTO.Create.class) @JsonView(UserDTO.Create.class) UserDTO userDTO, UriComponentsBuilder uriComponentsBuilder) {
         log.debug("POST UsersController#create received userDTO: {}", userDTO.toString());
-        if (service.valid(userDTO)) {
-            UUID id = service.create(userDTO);
+        ServiceResponse serviceResponse = service.create(userDTO);
+        if (serviceResponse.isOk()) {
+            UUID id = serviceResponse.getId();
             log.info("POST UsersController#create saved user id: {}", id);
             UriComponents uriComponents = uriComponentsBuilder.path("/users/{id}").buildAndExpand(id);
             return ResponseEntity
                 .created(uriComponents.toUri())
                 .build();
         } else {
-            log.warn("POST UsersController#create not valid: {}", userDTO.getErrors());
+            log.warn("POST UsersController#create not valid: {}", serviceResponse.getErrors());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(userDTO.getErrors());
+                .body(serviceResponse.getErrors());
         }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable(value = "id") UUID id, @RequestBody @Validated(UserDTO.Update.class) @JsonView(UserDTO.Update.class) UserDTO userDTO) {
         log.debug("PUT UsersController#update received id: {} and userDTO: {}", id, userDTO.toString());
-        Optional<UserDTO> updatedUserDTOOpt = service.findById(id);
-        if (updatedUserDTOOpt.isEmpty()) {
+        
+        ServiceResponse serviceResponse = service.update(id, userDTO, UserDTO.Update.class);
+        if (!serviceResponse.isFound()) {
             return ResponseEntity.notFound().build();
         }
 
-        UserDTO updatedUserDTO = updatedUserDTOOpt.get();
-        service.merge(userDTO, updatedUserDTO, UserDTO.Update.class);
-        if (service.valid(updatedUserDTO)) {
-            service.update(updatedUserDTO);
+        if (serviceResponse.isOk()) {
             log.info("PUT UsersController#update saved user id: {}", id);
             return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
         } else {
-            log.warn("PUT UsersController#update not valid: {}", updatedUserDTO.getErrors());
+            log.warn("PUT UsersController#update not valid: {}", serviceResponse.getErrors());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(updatedUserDTO.getErrors());
+                .body(serviceResponse.getErrors());
         }
     }
 
     @PutMapping("/{id}/password")
     public ResponseEntity<?> updatePassword(@PathVariable(value = "id") UUID id, @RequestBody @Validated(UserDTO.UpdatePassword.class) @JsonView(UserDTO.UpdatePassword.class) UserDTO userDTO) {
         log.debug("PUT UsersController#updatePassword received id: {} and userDTO: {}", id, userDTO.toString());
-        Optional<UserDTO> internalUserDTOOpt = service.findById(id);
-        if (internalUserDTOOpt.isEmpty()) {
+        
+        ServiceResponse serviceResponse = service.update(id, userDTO, UserDTO.UpdatePassword.class);
+        if (!serviceResponse.isFound()) {
             return ResponseEntity.notFound().build();
         }
 
-        UserDTO internalUserDTO = internalUserDTOOpt.get();
-        UserDTO updatedUserDTO = new UserDTO();
-        service.merge(internalUserDTO, updatedUserDTO);
-        service.merge(userDTO, updatedUserDTO, UserDTO.UpdatePassword.class);
-        if (service.valid(updatedUserDTO, internalUserDTO)) {
-            service.update(updatedUserDTO);
+        if (serviceResponse.isOk()) {
             log.info("PUT UsersController#updatePassword saved user id: {}", id);
             return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
         } else {
-            log.warn("PUT UsersController#updatePassword not valid: {}", updatedUserDTO.getErrors());
+            log.warn("PUT UsersController#updatePassword not valid: {}", serviceResponse.getErrors());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(updatedUserDTO.getErrors());
+                .body(serviceResponse.getErrors());
         }
     }
 
     @PutMapping("/{id}/image")
     public ResponseEntity<?> updateImage(@PathVariable(value = "id") UUID id, @RequestBody @Validated(UserDTO.UpdateImage.class) @JsonView(UserDTO.UpdateImage.class) UserDTO userDTO) {
         log.debug("PUT UsersController#updateImage received id: {} and userDTO: {}", id, userDTO.toString());
-        Optional<UserDTO> updatedUserDTOOpt = service.findById(id);
-        if (updatedUserDTOOpt.isEmpty()) {
+
+        ServiceResponse serviceResponse = service.update(id, userDTO, UserDTO.UpdateImage.class);
+        if (!serviceResponse.isFound()) {
             return ResponseEntity.notFound().build();
         }
 
-        UserDTO updatedUserDTO = updatedUserDTOOpt.get();
-        service.merge(userDTO, updatedUserDTO, UserDTO.UpdateImage.class);
-        if (service.valid(updatedUserDTO)) {
-            service.update(updatedUserDTO);
+        if (serviceResponse.isOk()) {
             log.info("PUT UsersController#updateImage saved user id: {}", id);
             return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
         } else {
-            log.warn("PUT UsersController#updateImage not valid: {}", updatedUserDTO.getErrors());
+            log.warn("PUT UsersController#updateImage not valid: {}", serviceResponse.getErrors());
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(updatedUserDTO.getErrors());
+                .body(serviceResponse.getErrors());
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") UUID id) {
-        try {
-            log.debug("DELETE UsersController#delete received id: {}", id);
-            service.deleteById(id);
+        log.debug("DELETE UsersController#delete received id: {}", id);
+
+        ServiceResponse serviceResponse = service.deleteById(id);
+        if (serviceResponse.isOk()) {    
             log.info("DELETE UsersController#delete deleted user id: {}", id);
             return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
-        } catch (IllegalArgumentException ex) {
-            log.warn("DELETE UsersController#delete not found");
+        } else {
+            log.warn("DELETE UsersController#delete id is null");
             return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+                .status(HttpStatus.BAD_REQUEST)
                 .build();
         }
     }

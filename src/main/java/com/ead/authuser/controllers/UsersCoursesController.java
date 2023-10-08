@@ -2,11 +2,9 @@ package com.ead.authuser.controllers;
 
 import com.ead.authuser.dtos.CourseDTO;
 import com.ead.authuser.dtos.UserCourseDTO;
-import com.ead.authuser.dtos.UserDTO;
+import com.ead.authuser.services.ServiceResponse;
 import com.ead.authuser.services.interfaces.UserCourseService;
-import com.ead.authuser.services.interfaces.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -22,18 +20,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/users/{userId}/courses")
-@Log4j2
 public class UsersCoursesController {
     @Autowired
     private UserCourseService service;
-    @Autowired
-    private UserService userService;
     @Value("${ead.api.url.course}")
     private String coursesURI;
 
@@ -42,9 +36,15 @@ public class UsersCoursesController {
         @PathVariable(value = "userId") UUID userId,
         @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(service.findAll(pageable, userId));
+        Page<CourseDTO> coursesDTO = service.findAll(pageable, userId);
+
+        if (coursesDTO != null) {
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(coursesDTO);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping
@@ -59,17 +59,15 @@ public class UsersCoursesController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Optional<UserDTO> userDTOOptional = userService.findById(userId);
-        if (userDTOOptional.isEmpty()) {
+        ServiceResponse serviceResponse = service.create(userId, userCourseDTO);
+
+        if (!serviceResponse.isFound()) {
             return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .build();
         }
 
-        UserDTO userDTO = userDTOOptional.get();
-        userCourseDTO.setUserDTO(userDTO);
-        if (service.valid(userCourseDTO)) {
-            service.create(userCourseDTO);
+        if (serviceResponse.isOk()) {
             UriComponents uriComponents = uriComponentsBuilder
                 .path("/users/{userId}/courses/{courseId}")
                 .buildAndExpand(userId, userCourseDTO.getCourseId());
@@ -79,7 +77,7 @@ public class UsersCoursesController {
         } else {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(userCourseDTO.getErrors());
+                .body(serviceResponse.getErrors());
         }
     }
 }

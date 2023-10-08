@@ -15,14 +15,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ead.authuser.services.ServiceResponse;
 import com.ead.authuser.services.interfaces.UserCourseService;
-
-import lombok.extern.log4j.Log4j2;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/courses/{courseId}/users")
-@Log4j2
 public class CoursesUsersController {
     @Value("${ead.api.url.course}")
     private String coursesURI;
@@ -40,15 +38,15 @@ public class CoursesUsersController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            service.deleteByCourseId(courseId);
+        ServiceResponse serviceResponse = service.deleteByCourseId(courseId);
+        if (serviceResponse.isOk()) {
             return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
-        } catch (IllegalArgumentException ex) {
+        } else {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
+                .build();
         }
     }
 }
