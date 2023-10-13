@@ -11,9 +11,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -25,6 +29,8 @@ public class CourseClient {
     private RestTemplate restTemplate;
     @Autowired
     private ObjectMapper objectMapper;
+    @Value("${ead.api.url.authuser}")
+    private String authUserURI;
     @Value("${ead.api.url.course}")
     private String coursesURI;
 
@@ -55,5 +61,25 @@ public class CourseClient {
             log.info("Completed request to URL: {}", requestUrl);
         }
         return null;
+    }
+
+    public void deleteCourseUserRelationship(UUID userId) {
+        String requestUrl = coursesURI + "/users/" + userId + "/courses";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Requested-By", Base64.getEncoder().encodeToString(authUserURI.getBytes()));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(null, headers);
+
+        log.info("Request URL: {}", requestUrl);
+        try {
+            restTemplate.exchange(requestUrl, HttpMethod.DELETE, requestEntity, String.class);
+        } catch (HttpStatusCodeException ex) {
+            log.error("Error in request to URL: {}", requestUrl, ex);
+            throw ex;
+        } finally {
+            log.info("Completed request to URL: {}", requestUrl);
+        }
     }
 }

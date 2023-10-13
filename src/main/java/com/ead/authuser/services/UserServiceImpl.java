@@ -1,5 +1,6 @@
 package com.ead.authuser.services;
 
+import com.ead.authuser.clients.CourseClient;
 import com.ead.authuser.dtos.UserDTO;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
@@ -30,6 +31,8 @@ public class UserServiceImpl implements UserService {
     private UserRepository repository;
     @Autowired
     private UserCourseRepository userCourseRepository;
+    @Autowired
+    private CourseClient courseClient;
 
     @Override
     public Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable, UUID courseId) {
@@ -67,6 +70,7 @@ public class UserServiceImpl implements UserService {
         if (repository.existsById(id)) {
             userCourseRepository.deleteAllByUser(id);
             repository.deleteById(id);
+            courseClient.deleteCourseUserRelationship(id);
         }
         return ServiceResponse.builder().build();
     }
