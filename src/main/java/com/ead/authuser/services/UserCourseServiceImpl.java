@@ -26,6 +26,7 @@ import java.util.UUID;
 import javax.transaction.Transactional;
 
 @Service
+@Deprecated
 public class UserCourseServiceImpl implements UserCourseService {
     @Autowired
     private UserCourseRepository repository;

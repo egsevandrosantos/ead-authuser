@@ -1,11 +1,9 @@
 package com.ead.authuser.services;
 
-import com.ead.authuser.clients.CourseClient;
 import com.ead.authuser.dtos.UserDTO;
 import com.ead.authuser.enums.UserStatus;
 import com.ead.authuser.enums.UserType;
 import com.ead.authuser.models.User;
-import com.ead.authuser.repositories.UserCourseRepository;
 import com.ead.authuser.repositories.UserRepository;
 import com.ead.authuser.services.interfaces.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -29,18 +27,9 @@ import javax.transaction.Transactional;
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository repository;
-    @Autowired
-    private UserCourseRepository userCourseRepository;
-    @Autowired
-    private CourseClient courseClient;
 
     @Override
-    public Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable, UUID courseId) {
-        if (courseId != null) {
-            filtersSpec = ((Specification<User>) (root, query, criteriaBuilder) ->
-                criteriaBuilder.and(criteriaBuilder.equal(root.join("usersCourses").get("courseId"), courseId))
-            ).and(filtersSpec);
-        }
+    public Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable) {
         Page<User> usersPage = repository.findAll(filtersSpec, pageable);
 
         List<User> users = usersPage.getContent();
@@ -68,9 +57,7 @@ public class UserServiceImpl implements UserService {
                 .build();
         }
         if (repository.existsById(id)) {
-            userCourseRepository.deleteAllByUser(id);
             repository.deleteById(id);
-            courseClient.deleteCourseUserRelationship(id);
         }
         return ServiceResponse.builder().build();
     }

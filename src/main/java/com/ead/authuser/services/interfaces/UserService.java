@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserService {
-    Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable, UUID courseId);
+    Page<UserDTO> findAll(Specification<User> filtersSpec, Pageable pageable);
     Optional<UserDTO> findById(UUID id);
     ServiceResponse deleteById(UUID id) throws IllegalArgumentException;
     ServiceResponse create(UserDTO userDTO);

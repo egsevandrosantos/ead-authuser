@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
 
+@Deprecated
 public interface UserCourseService {
     Page<CourseDTO> findAll(Pageable pageable, UUID userId);
     ServiceResponse create(UUID userId, UserCourseDTO userCourseDTO);

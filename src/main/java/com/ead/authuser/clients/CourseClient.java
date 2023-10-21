@@ -24,6 +24,7 @@ import java.util.*;
 
 @Component
 @Log4j2
+@Deprecated
 public class CourseClient {
     @Autowired
     private RestTemplate restTemplate;
