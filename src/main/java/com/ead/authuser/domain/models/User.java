@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.ead.authuser.domain.enumerations.UserStatus;
 import com.ead.authuser.domain.enumerations.UserType;
+import com.ead.authuser.domain.models.listeners.UserListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,8 +27,8 @@ import lombok.Setter;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Getter
 @Setter
-@EntityListeners(AuditingEntityListener.class)
-public class User {
+@EntityListeners(value = { UserListener.class, AuditingEntityListener.class })
+public class User implements BaseEntity {
 	@EqualsAndHashCode.Include
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
